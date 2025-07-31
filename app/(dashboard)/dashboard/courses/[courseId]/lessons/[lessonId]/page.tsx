@@ -17,6 +17,10 @@ export default async function LessonPage({ params }: LessonPageProps) {
   const user = await currentUser();
   const { courseId, lessonId } = await params;
 
+  if (!user?.id) {
+    return redirect("/");
+  }
+
   const lesson = await getLessonById(lessonId);
 
   if (!lesson) {
@@ -51,7 +55,7 @@ export default async function LessonPage({ params }: LessonPageProps) {
             )}
 
             <div className="flex justify-end">
-              <LessonCompleteButton lessonId={lesson._id} clerkId={user!.id} />
+              <LessonCompleteButton lessonId={lesson._id} clerkId={user.id} />
             </div>
           </div>
         </div>

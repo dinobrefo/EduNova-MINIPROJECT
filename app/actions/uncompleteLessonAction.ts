@@ -7,11 +7,14 @@ export async function uncompleteLessonAction(
   clerkId: string
 ) {
   try {
+    console.log("Starting lesson uncompletion for:", { lessonId, clerkId });
+    
     await uncompleteLessonById({
       lessonId,
       clerkId,
     });
 
+    console.log("Lesson uncompletion successful");
     return { success: true };
   } catch (error) {
     console.error("Error uncompleting lesson:", error);

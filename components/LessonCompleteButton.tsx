@@ -21,16 +21,21 @@ export function LessonCompleteButton({
   const [isPending, setIsPending] = useState(false);
   const [isCompleted, setIsCompleted] = useState<boolean | null>(null);
   const [isPendingTransition, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     startTransition(async () => {
       try {
+        console.log("Checking lesson completion status for:", { lessonId, clerkId });
         const status = await getLessonCompletionStatusAction(lessonId, clerkId);
+        console.log("Lesson completion status:", status);
         setIsCompleted(status);
+        setError(null);
       } catch (error) {
         console.error("Error checking lesson completion status:", error);
         setIsCompleted(false);
+        setError("Failed to check completion status");
       }
     });
   }, [lessonId, clerkId]);
@@ -38,10 +43,16 @@ export function LessonCompleteButton({
   const handleToggle = async () => {
     try {
       setIsPending(true);
+      setError(null);
+      
+      console.log("Toggling lesson completion:", { lessonId, clerkId, isCompleted });
+      
       if (isCompleted) {
         await uncompleteLessonAction(lessonId, clerkId);
+        console.log("Lesson uncompleted successfully");
       } else {
         await completeLessonAction(lessonId, clerkId);
+        console.log("Lesson completed successfully");
       }
 
       startTransition(async () => {
@@ -55,6 +66,7 @@ export function LessonCompleteButton({
       router.refresh();
     } catch (error) {
       console.error("Error toggling lesson completion:", error);
+      setError("Failed to update lesson completion");
     } finally {
       setIsPending(false);
     }
@@ -76,6 +88,9 @@ export function LessonCompleteButton({
               ? "You can mark it as incomplete if you need to revisit it."
               : "Mark it as complete when you're done."}
           </p>
+          {error && (
+            <p className="text-sm text-red-500 mt-1">{error}</p>
+          )}
         </div>
         <Button
           onClick={handleToggle}
