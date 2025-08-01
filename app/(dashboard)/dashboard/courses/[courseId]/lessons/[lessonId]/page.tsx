@@ -5,6 +5,7 @@ import { PortableText } from "@portabletext/react";
 import { LoomEmbed } from "@/components/LoomEmbed";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { LessonCompleteButton } from "@/components/LessonCompleteButton";
+import { LearningChatbot } from "@/components/LearningChatbot";
 
 interface LessonPageProps {
   params: Promise<{
@@ -60,6 +61,16 @@ export default async function LessonPage({ params }: LessonPageProps) {
           </div>
         </div>
       </div>
+
+      {/* AI Learning Assistant */}
+      <LearningChatbot 
+        userId={user.id}
+        context={{
+          courseTitle: "Current Course", // You can fetch actual course title
+          lessonTitle: lesson.title,
+          currentTopic: lesson.description || "Learning"
+        }}
+      />
     </div>
   );
 }
