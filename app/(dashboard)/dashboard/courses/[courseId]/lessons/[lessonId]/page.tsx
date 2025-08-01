@@ -5,7 +5,6 @@ import { PortableText } from "@portabletext/react";
 import { LoomEmbed } from "@/components/LoomEmbed";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { LessonCompleteButton } from "@/components/LessonCompleteButton";
-import { AIContentSummarizer } from "@/components/AIContentSummarizer";
 
 interface LessonPageProps {
   params: Promise<{
@@ -28,31 +27,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
     return redirect(`/dashboard/courses/${courseId}`);
   }
 
-  // Extract text content from PortableText for AI analysis
-  const extractTextFromPortableText = (content: any): string => {
-    if (!content) return "";
-    
-    let text = "";
-    const extractText = (blocks: any[]) => {
-      blocks.forEach((block) => {
-        if (block._type === "block") {
-          if (block.children) {
-            block.children.forEach((child: any) => {
-              if (child.text) {
-                text += child.text + " ";
-              }
-            });
-          }
-        }
-      });
-    };
-    
-    extractText(content);
-    return text.trim();
-  };
-
-  const lessonTextContent = lesson.content ? extractTextFromPortableText(lesson.content) : "";
-
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
@@ -69,14 +43,6 @@ export default async function LessonPage({ params }: LessonPageProps) {
 
             {/* Loom Embed Video if loomUrl is provided */}
             {lesson.loomUrl && <LoomEmbed shareUrl={lesson.loomUrl} />}
-
-            {/* AI Content Summarizer */}
-            {lessonTextContent && (
-              <AIContentSummarizer 
-                content={lessonTextContent}
-                lessonTitle={lesson.title}
-              />
-            )}
 
             {/* Lesson Content */}
             {lesson.content && (
