@@ -7,9 +7,9 @@ export const client = createClient({
   projectId,
   dataset,
   apiVersion,
-  useCdn: true, // Set to false if statically generating pages, using ISR or tag-based revalidation
+  useCdn: false, // Disable CDN for write operations
   stega: {
     studioUrl: `${baseUrl}/studio`,
   },
-  token: process.env.SANITY_API_TOKEN,
+  token: process.env.SANITY_API_ADMIN_TOKEN,
 });
