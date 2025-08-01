@@ -1,13 +1,19 @@
 "use server";
 
-import { LearningChatbot, ChatResponse, LearningContext } from "@/lib/chatbot";
+import { TensorFlowChatbot, ChatResponse, LearningContext } from "@/lib/tensorflow-chatbot";
 
 // Store chatbot instances per user (in production, use Redis or database)
-const chatbotInstances = new Map<string, LearningChatbot>();
+const chatbotInstances = new Map<string, TensorFlowChatbot>();
 
-function getChatbotInstance(userId: string, context?: LearningContext): LearningChatbot {
+function getChatbotInstance(userId: string, context?: LearningContext): TensorFlowChatbot {
   if (!chatbotInstances.has(userId)) {
-    chatbotInstances.set(userId, new LearningChatbot(context));
+    const chatbot = new TensorFlowChatbot(context);
+    chatbotInstances.set(userId, chatbot);
+    
+    // Train the model for new instances
+    chatbot.trainModel().catch(error => {
+      console.error(`Error training model for user ${userId}:`, error);
+    });
   } else if (context) {
     // Update context if provided
     const chatbot = chatbotInstances.get(userId)!;
@@ -39,8 +45,8 @@ export async function sendChatMessage(
 }
 
 export async function getStudyTips(
+  topic: string | undefined, 
   userId: string, 
-  topic?: string, 
   context?: LearningContext
 ): Promise<string> {
   try {

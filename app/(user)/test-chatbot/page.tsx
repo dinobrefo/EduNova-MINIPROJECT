@@ -36,11 +36,11 @@ export default async function TestChatbotPage() {
           <div className="bg-card p-6 rounded-lg border">
             <h2 className="text-xl font-semibold mb-4">Sample Questions to Try</h2>
             <div className="space-y-2 text-sm">
-              <p>• "How can I improve my memory for studying?"</p>
-              <p>• "What are some effective note-taking techniques?"</p>
-              <p>• "I'm feeling overwhelmed with my studies, can you help?"</p>
-              <p>• "Explain the concept of [any topic you're learning]"</p>
-              <p>• "Give me some motivation to keep learning"</p>
+              <p>• &ldquo;How can I improve my memory for studying?&rdquo;</p>
+              <p>• &ldquo;What are some effective note-taking techniques?&rdquo;</p>
+              <p>• &ldquo;I&apos;m feeling overwhelmed with my studies, can you help?&rdquo;</p>
+              <p>• &ldquo;Explain the concept of [any topic you&apos;re learning]&rdquo;</p>
+              <p>• &ldquo;Give me some motivation to keep learning&rdquo;</p>
             </div>
           </div>
 

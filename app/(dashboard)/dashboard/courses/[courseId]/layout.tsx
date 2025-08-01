@@ -16,19 +16,19 @@ export default async function CourseLayout({
   children,
   params,
 }: CourseLayoutProps) {
-  const user = await currentUser();
-  const { courseId } = await params;
-
-  if (!user?.id) {
-    return redirect("/");
-  }
-
-  const authResult = await checkCourseAccess(user.id, courseId);
-  if (!authResult.isAuthorized) {
-    return redirect(authResult.redirect!);
-  }
-
   try {
+    const user = await currentUser();
+    const { courseId } = await params;
+
+    if (!user?.id) {
+      return redirect("/");
+    }
+
+    const authResult = await checkCourseAccess(user.id, courseId);
+    if (!authResult.isAuthorized) {
+      return redirect(authResult.redirect!);
+    }
+
     const [course, progress] = await Promise.all([
       getCourseById(courseId),
       getCourseProgress(user.id, courseId),
