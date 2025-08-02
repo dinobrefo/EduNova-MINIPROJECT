@@ -1,13 +1,13 @@
 "use server";
 
-import { TensorFlowChatbot, ChatResponse, LearningContext } from "@/lib/tensorflow-chatbot";
+import { EnhancedTensorFlowChatbot, ChatResponse, LearningContext } from "@/lib/enhanced-tensorflow-chatbot";
 
 // Store chatbot instances per user (in production, use Redis or database)
-const chatbotInstances = new Map<string, TensorFlowChatbot>();
+const chatbotInstances = new Map<string, EnhancedTensorFlowChatbot>();
 
-function getChatbotInstance(userId: string, context?: LearningContext): TensorFlowChatbot {
+function getChatbotInstance(userId: string, context?: LearningContext): EnhancedTensorFlowChatbot {
   if (!chatbotInstances.has(userId)) {
-    const chatbot = new TensorFlowChatbot(context);
+    const chatbot = new EnhancedTensorFlowChatbot(context);
     chatbotInstances.set(userId, chatbot);
     
     // Train the model for new instances

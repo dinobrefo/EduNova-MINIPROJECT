@@ -24,7 +24,7 @@ import {
   getMotivationalMessage,
   clearChatHistory 
 } from "@/app/actions/chatbotActions";
-import { ChatMessage, LearningContext } from "@/lib/tensorflow-chatbot";
+import { ChatMessage, LearningContext } from "@/lib/enhanced-tensorflow-chatbot";
 import { cn } from "@/lib/utils";
 
 interface LearningChatbotProps {
