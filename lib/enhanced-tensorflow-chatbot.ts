@@ -88,17 +88,17 @@ export class EnhancedTensorFlowChatbot {
 
   private calculateSimilarity(vec1: number[], vec2: number[]): number {
     if (vec1.length !== vec2.length) return 0;
-    
+
     let dotProduct = 0;
     let norm1 = 0;
     let norm2 = 0;
-    
+
     for (let i = 0; i < vec1.length; i++) {
       dotProduct += vec1[i] * vec2[i];
       norm1 += vec1[i] * vec1[i];
       norm2 += vec2[i] * vec2[i];
     }
-    
+
     if (norm1 === 0 || norm2 === 0) return 0;
     return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
   }
@@ -117,7 +117,7 @@ export class EnhancedTensorFlowChatbot {
         this.searchCache.set(query, results);
         return results;
       }
-      
+
       // Fallback to simulated search if no API keys provided
       return this.simulateWebSearch(query);
     } catch (error) {
@@ -129,7 +129,7 @@ export class EnhancedTensorFlowChatbot {
   private async simulateWebSearch(query: string): Promise<WebSearchResult[]> {
     // This is a simulated web search that provides realistic-looking results
     // In production, replace this with actual API calls to Google Custom Search, Bing, etc.
-    
+
     const mockResults = [
       {
         title: `Latest information about ${query} - 2024`,
@@ -159,10 +159,10 @@ export class EnhancedTensorFlowChatbot {
 
     const sources = searchResults.map(result => result.url);
     const snippets = searchResults.map(result => result.snippet || result.content || '').filter(s => s.length > 0);
-    
+
     // Create a more intelligent, synthesized response
     let response = '';
-    
+
     if (snippets.length > 0) {
       // Extract key information and create a coherent answer
       const allContent = snippets.join(' ');
@@ -176,15 +176,15 @@ export class EnhancedTensorFlowChatbot {
         .replace(/\d+ upvotes?/g, '') // Remove Reddit-style metadata
         .replace(/\d+ comments?/g, '')
         .trim();
-      
+
       // Create a more natural, conversational response
       const questionWords = ['what', 'how', 'why', 'when', 'where', 'which', 'who'];
       const isQuestion = questionWords.some(word => input.toLowerCase().includes(word));
-      
+
       // Extract the most relevant sentence or two
       const sentences = cleanContent.split(/[.!?]+/).filter(s => s.trim().length > 20);
       const relevantSentences = sentences.slice(0, 2).join('. ').trim();
-      
+
       if (isQuestion) {
         // For questions, provide a direct answer
         if (relevantSentences) {
@@ -212,7 +212,7 @@ export class EnhancedTensorFlowChatbot {
           }
         }
       }
-      
+
       // Add a subtle source note only if we have good content
       if (sources.length > 0 && response.length > 50) {
         response += `\n\n*Updated information from recent sources*`;
@@ -220,14 +220,14 @@ export class EnhancedTensorFlowChatbot {
     } else {
       response = `I found some information about ${input}, but couldn't extract the specific details. You might want to search for this topic directly.`;
     }
-    
+
     return response;
   }
 
   public async trainModel(): Promise<void> {
     try {
       console.log('Starting Enhanced TensorFlow-inspired Chatbot training...');
-      
+
       this.trainingData.forEach(data => {
         data.patterns.forEach(pattern => {
           const words = this.preprocessText(pattern);
@@ -238,7 +238,7 @@ export class EnhancedTensorFlowChatbot {
 
       this.isModelTrained = true;
       console.log('Enhanced model training completed!');
-      
+
     } catch (error) {
       console.error('Error training model:', error);
       throw error;
@@ -253,23 +253,23 @@ export class EnhancedTensorFlowChatbot {
     try {
       const inputWords = this.preprocessText(input);
       const inputVector = this.createWordVector(inputWords);
-      
+
       let bestSimilarity = 0;
       let bestTag = '';
       let shouldSearch = false;
 
       const lowerInput = input.toLowerCase();
-      
+
       // Check for mathematical expressions first
       const mathResult = this.evaluateMathExpression(input);
       if (mathResult !== null) {
-        return { 
+        return {
           response: `The answer is ${mathResult}`,
           confidence: 0.95,
           shouldSearch: false
         };
       }
-      
+
       // Enhanced web search triggers - be more aggressive about searching
       const searchKeywords = [
         'search', 'find', 'look up', 'what is', 'who is', 'latest', 'news',
@@ -278,11 +278,11 @@ export class EnhancedTensorFlowChatbot {
         'library', 'tool', 'platform', 'service', 'api', 'database',
         'algorithm', 'method', 'technique', 'approach', 'strategy'
       ];
-      
+
       const questionWords = ['what', 'how', 'why', 'when', 'where', 'which', 'who'];
       const hasQuestionWord = questionWords.some(word => lowerInput.includes(word));
       const hasSearchKeyword = searchKeywords.some(keyword => lowerInput.includes(keyword));
-      
+
       // Trigger web search for questions or search-related queries
       if (hasQuestionWord || hasSearchKeyword || input.length > 10) {
         shouldSearch = true;
@@ -313,7 +313,7 @@ export class EnhancedTensorFlowChatbot {
 
       // For most other queries, prefer web search
       if (shouldSearch) {
-        return { 
+        return {
           response: "Let me search for current information about that for you...",
           confidence: 0.8,
           shouldSearch: true
@@ -321,7 +321,7 @@ export class EnhancedTensorFlowChatbot {
       }
 
       return { ...this.getFallbackResponse(input), shouldSearch };
-      
+
     } catch (error) {
       console.error('Error in prediction:', error);
       return { ...this.getFallbackResponse(input), shouldSearch: false };
@@ -330,21 +330,21 @@ export class EnhancedTensorFlowChatbot {
 
   private getFallbackResponse(input: string): { response: string; confidence: number } {
     const lowerInput = input.toLowerCase();
-    
+
     if (this.context.courseTitle && this.context.lessonTitle) {
       return {
         response: `I'm here to help with your ${this.context.courseTitle} course, specifically the lesson on ${this.context.lessonTitle}. What would you like to know?`,
         confidence: 0.5
       };
     }
-    
+
     if (lowerInput.includes('hello') || lowerInput.includes('hi')) {
       return {
         response: "Hello! 👋 I'm your AI learning assistant with web search capabilities. How can I help you with your studies today?",
         confidence: 0.8
       };
     }
-    
+
     return {
       response: "I'm here to help you learn! I can provide study tips, explain concepts, offer motivation, and search the web for current information. What would you like to explore?",
       confidence: 0.6
@@ -380,7 +380,7 @@ export class EnhancedTensorFlowChatbot {
       };
       this.conversationHistory.push(assistantMessage);
 
-      return { 
+      return {
         response: finalResponse,
         confidence,
         sources: sources.length > 0 ? sources : undefined
@@ -415,35 +415,51 @@ export class EnhancedTensorFlowChatbot {
     this.searchCache.clear();
   }
 
+  public async getStudyTips(topic?: string): Promise<string> {
+    const input = topic ? `study tips for ${topic}` : "study tips";
+    const response = await this.sendMessage(input);
+    return response.response;
+  }
+
+  public async explainConcept(concept: string): Promise<string> {
+    const response = await this.sendMessage(`explain ${concept}`);
+    return response.response;
+  }
+
+  public async getMotivationalMessage(): Promise<string> {
+    const response = await this.sendMessage("motivation");
+    return response.response;
+  }
+
   private evaluateMathExpression(input: string): number | null {
     try {
       // Clean the input - remove extra spaces and common math words
       const cleanInput = input.toLowerCase()
         .replace(/[^0-9+\-*/().,]/g, '') // Keep only numbers and basic operators
         .replace(/\s+/g, ''); // Remove spaces
-      
+
       // Check if it looks like a math expression
       const hasNumbers = /\d/.test(cleanInput);
       const hasOperators = /[+\-*/]/.test(cleanInput);
-      
+
       if (!hasNumbers || !hasOperators) {
         return null;
       }
-      
+
       // For safety, only allow simple expressions
       const safeExpression = /^[\d+\-*/().\s]+$/.test(cleanInput);
       if (!safeExpression) {
         return null;
       }
-      
+
       // Evaluate the expression
       const result = eval(cleanInput);
-      
+
       // Check if result is a valid number
       if (typeof result === 'number' && !isNaN(result) && isFinite(result)) {
         return result;
       }
-      
+
       return null;
     } catch {
       return null;

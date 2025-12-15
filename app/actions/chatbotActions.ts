@@ -1,40 +1,53 @@
 "use server";
 
-import { EnhancedTensorFlowChatbot, ChatResponse, LearningContext } from "@/lib/enhanced-tensorflow-chatbot";
+import { GeminiChatbot, ChatResponse, LearningContext } from "@/lib/gemini-chatbot";
+import { EnhancedTensorFlowChatbot } from "@/lib/enhanced-tensorflow-chatbot";
 
-// Store chatbot instances per user (in production, use Redis or database)
-const chatbotInstances = new Map<string, EnhancedTensorFlowChatbot>();
+// store chatbot instances per user
+// In a real serverless environment (like Vercel), this in-memory map might be reset frequently.
+// Ideally, we should reconstruct the chatbot state from a persistent store (database/Redis).
+// For this demo/project, this map works as long as the lambda stays warm, but we'll optimize for statelessness where possible
+// or accept that history might be lost on cold starts.
+const geminiInstances = new Map<string, GeminiChatbot>();
+const legacyInstances = new Map<string, EnhancedTensorFlowChatbot>();
 
-function getChatbotInstance(userId: string, context?: LearningContext): EnhancedTensorFlowChatbot {
-  if (!chatbotInstances.has(userId)) {
-    const chatbot = new EnhancedTensorFlowChatbot(context);
-    chatbotInstances.set(userId, chatbot);
-    
-    // Train the model for new instances
-    chatbot.trainModel().catch(error => {
-      console.error(`Error training model for user ${userId}:`, error);
-    });
-  } else if (context) {
-    // Update context if provided
-    const chatbot = chatbotInstances.get(userId)!;
-    chatbot.updateContext(context);
+function getChatbotInstance(userId: string, context?: LearningContext): GeminiChatbot | EnhancedTensorFlowChatbot {
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (apiKey) {
+    if (!geminiInstances.has(userId)) {
+      const chatbot = new GeminiChatbot(apiKey, context);
+      geminiInstances.set(userId, chatbot);
+      return chatbot;
+    } else {
+      const chatbot = geminiInstances.get(userId)!;
+      if (context) chatbot.updateContext(context);
+      return chatbot;
+    }
+  } else {
+    // Fallback to legacy if no API Key
+    console.warn("GEMINI_API_KEY not found. Falling back to TensorFlow Chatbot.");
+    if (!legacyInstances.has(userId)) {
+      const chatbot = new EnhancedTensorFlowChatbot(context);
+      legacyInstances.set(userId, chatbot);
+      chatbot.trainModel().catch(console.error);
+      return chatbot;
+    } else {
+      const chatbot = legacyInstances.get(userId)!;
+      if (context) chatbot.updateContext(context);
+      return chatbot;
+    }
   }
-  return chatbotInstances.get(userId)!;
 }
 
 export async function sendChatMessage(
-  message: string, 
-  userId: string, 
+  message: string,
+  userId: string,
   context?: LearningContext
 ): Promise<ChatResponse> {
   try {
-    console.log("Processing chat message:", { message, userId });
-    
     const chatbot = getChatbotInstance(userId, context);
-    const response = await chatbot.sendMessage(message);
-    
-    console.log("Chat response generated successfully");
-    return response;
+    return await chatbot.sendMessage(message);
   } catch (error) {
     console.error("Error in sendChatMessage:", error);
     return {
@@ -45,69 +58,50 @@ export async function sendChatMessage(
 }
 
 export async function getStudyTips(
-  topic: string | undefined, 
-  userId: string, 
+  topic: string | undefined,
+  userId: string,
   context?: LearningContext
 ): Promise<string> {
   try {
-    console.log("Getting study tips for:", { userId, topic });
-    
     const chatbot = getChatbotInstance(userId, context);
-    const tips = await chatbot.getStudyTips(topic);
-    
-    console.log("Study tips generated successfully");
-    return tips;
+    return await chatbot.getStudyTips(topic);
   } catch (error) {
     console.error("Error getting study tips:", error);
-    return "Here are some general study tips:\n1. Take regular breaks (25 min study, 5 min break)\n2. Use active recall techniques\n3. Connect new concepts to things you already know";
+    return "Study Tip 1: Consistency is key.\nStudy Tip 2: Practice active recall.\nStudy Tip 3: Get enough sleep!";
   }
 }
 
 export async function explainConcept(
-  concept: string, 
-  userId: string, 
+  concept: string,
+  userId: string,
   context?: LearningContext
 ): Promise<string> {
   try {
-    console.log("Explaining concept:", { concept, userId });
-    
     const chatbot = getChatbotInstance(userId, context);
-    const explanation = await chatbot.explainConcept(concept);
-    
-    console.log("Concept explanation generated successfully");
-    return explanation;
+    return await chatbot.explainConcept(concept);
   } catch (error) {
     console.error("Error explaining concept:", error);
-    return `I'd be happy to explain "${concept}"! However, I'm having trouble connecting right now. Try asking your instructor or checking your course materials for a detailed explanation.`;
+    return `I can't explain "${concept}" right now due to a connection error.`;
   }
 }
 
 export async function getMotivationalMessage(
-  userId: string, 
+  userId: string,
   context?: LearningContext
 ): Promise<string> {
   try {
-    console.log("Getting motivational message for:", userId);
-    
     const chatbot = getChatbotInstance(userId, context);
-    const message = await chatbot.getMotivationalMessage();
-    
-    console.log("Motivational message generated successfully");
-    return message;
+    return await chatbot.getMotivationalMessage();
   } catch (error) {
-    console.error("Error getting motivational message:", error);
-    return "Remember: Every expert was once a beginner. Keep going, you're doing great! 🌟";
+    return "You can do it! Keep pushing forward.";
   }
 }
 
 export async function clearChatHistory(userId: string): Promise<void> {
   try {
-    console.log("Clearing chat history for:", userId);
-    
-    const chatbot = getChatbotInstance(userId);
-    chatbot.clearHistory();
-    
-    console.log("Chat history cleared successfully");
+    // Clear both to be safe
+    if (geminiInstances.has(userId)) geminiInstances.get(userId)!.clearHistory();
+    if (legacyInstances.has(userId)) legacyInstances.get(userId)!.clearHistory();
   } catch (error) {
     console.error("Error clearing chat history:", error);
   }
@@ -115,10 +109,15 @@ export async function clearChatHistory(userId: string): Promise<void> {
 
 export async function getChatHistory(userId: string) {
   try {
-    const chatbot = getChatbotInstance(userId);
-    return chatbot.getConversationHistory();
+    if (geminiInstances.has(userId)) {
+      return geminiInstances.get(userId)!.getConversationHistory();
+    }
+    if (legacyInstances.has(userId)) {
+      return legacyInstances.get(userId)!.getConversationHistory();
+    }
+    return [];
   } catch (error) {
     console.error("Error getting chat history:", error);
     return [];
   }
-} 
+}
